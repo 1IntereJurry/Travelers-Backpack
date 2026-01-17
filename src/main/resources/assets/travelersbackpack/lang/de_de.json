@@ -118,8 +118,6 @@
   "block.travelersbackpack.green_sleeping_bag": "Grüner Schlafsack",
   "block.travelersbackpack.red_sleeping_bag": "Roter Schlafsack",
   "block.travelersbackpack.black_sleeping_bag": "Schwarzer Schlafsack",
-
-  //save point
   
   "item.travelersbackpack.inventory_tooltip": "Drücke <Strg>, um das Inventar anzuzeigen",
   "item.travelersbackpack.blank_upgrade": "Leeres Upgrade",
@@ -250,8 +248,6 @@
   "block.travelersbackpack.villager": "Dorfbewohner‑Reiserucksack",
   "block.travelersbackpack.iron_golem": "Eisengolem‑Reiserucksack",
 
-  // safe point #2
-
   "travelersbackpack.configuration.title": "Reiserucksack",
   "travelersbackpack.configuration.common": "Allgemein",
   "travelersbackpack.configuration.client": "Client",
@@ -379,5 +375,9 @@
   "advancements.travelersbackpack.hose_drink_potion.title": "Tränke trinken",
   "advancements.travelersbackpack.hose_drink_potion.description": "Trank trinken",
   "advancements.travelersbackpack.hose_spill_potion.title": "Tränke verschütten",
-  "advancements.travelersbackpack.hose_spill_potion.description": "Fülle die Rucksacktanks mit Verweil- oder Wurftränken und wirf sie mit dem Schlauch in die Welt"
+  "advancements.travelersbackpack.hose_spill_potion.description": "Fülle die Rucksacktanks mit Verweil- oder Wurftränken und wirf sie mit dem Schlauch in die Welt",
+  
+  "item.travelersbackpack.void_upgrade_tooltip": "Provides a trash bin for manual item deletion and filters to automatically void items when they enter the backpack via the Pickup Upgrade or hoppers",
+  "screen.travelersbackpack.void_upgrade_trash_bin": "Enter selection mode\n§cChoose slots to delete\n§cChoose tanks to drain\n§7Left click to select\n§7Right click to unselect",
+  "screen.travelersbackpack.void_upgrade_trash_bin_drop": "Drop trash bin to delete or click ESC to cancel",
 }
