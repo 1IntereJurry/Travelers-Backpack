@@ -377,7 +377,7 @@
   "advancements.travelersbackpack.hose_spill_potion.title": "Tränke verschütten",
   "advancements.travelersbackpack.hose_spill_potion.description": "Fülle die Rucksacktanks mit Verweil- oder Wurftränken und wirf sie mit dem Schlauch in die Welt",
   
-  "item.travelersbackpack.void_upgrade_tooltip": "Provides a trash bin for manual item deletion and filters to automatically void items when they enter the backpack via the Pickup Upgrade or hoppers",
-  "screen.travelersbackpack.void_upgrade_trash_bin": "Enter selection mode\n§cChoose slots to delete\n§cChoose tanks to drain\n§7Left click to select\n§7Right click to unselect",
-  "screen.travelersbackpack.void_upgrade_trash_bin_drop": "Drop trash bin to delete or click ESC to cancel",
+  "item.travelersbackpack.void_upgrade_tooltip": "Bietet einen Papierkorb zum manuellen Löschen von Gegenständen und Filter, um Gegenstände automatisch zu entleeren, wenn sie über das Pickup-Upgrade oder Trichter in den Rucksack gelangen",
+  "screen.travelersbackpack.void_upgrade_trash_bin": "In den Auswahlmodus wechseln\n§cFelder zum löschen auswählen\n§cWählen sie Tanks zum entleeren\n§7Linksklick zum auswählen\n§7Rechstklick um Auswahl aufzuheben",
+  "screen.travelersbackpack.void_upgrade_trash_bin_drop": "Auf Papierkorb fallen lasse um zu löschen; drücke ESC zum abbrechen",
 }
