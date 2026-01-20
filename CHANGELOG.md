@@ -1,7 +1,9 @@
-🔧 Made labels in backpack tooltip translatable  
-🔧 Equip button is now visible when the backpack is opened from inventory  
-🐛 Fixed bug where backpack disappeared if player in creative mode unequipped it with a full inventory  
-🐛 Fixed Tough as Nails compatibility crash, works only with ToughAsNails-forge-1.20.1-9.2.0.171  
+✨ Improved Void Upgrade - Removed Trash Slot from filter slots and added separate Trash Bin feature for deleting items and draining tanks  
+✨ Fixed visual compatibility with Trash Slot mod for proper UI display  
+🔧 Changed translation entries for tiers  
+🐛 Fixed wrong boundaries of sorting buttons  
+🐛 Fixed crash with some mods  
+📚 Updated hu_hu - Thanks Gery D.!  
 
 ⭐ Want to receive **Supporter Star Badge** for a **lifetime**? - [visit my Ko-Fi page](https://ko-fi.com/tiviacz1337)!  
 ![Banner](https://i.imgur.com/SSrFv58.png)

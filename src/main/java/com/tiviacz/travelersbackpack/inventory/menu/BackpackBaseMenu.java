@@ -10,7 +10,6 @@ import com.tiviacz.travelersbackpack.inventory.upgrades.IUpgrade;
 import com.tiviacz.travelersbackpack.inventory.upgrades.UpgradeBase;
 import com.tiviacz.travelersbackpack.inventory.upgrades.crafting.CraftingUpgrade;
 import com.tiviacz.travelersbackpack.inventory.upgrades.tanks.TanksUpgrade;
-import com.tiviacz.travelersbackpack.inventory.upgrades.voiding.VoidUpgrade;
 import com.tiviacz.travelersbackpack.items.upgrades.UpgradeItem;
 import com.tiviacz.travelersbackpack.network.ClientboundUpdateRecipePacket;
 import com.tiviacz.travelersbackpack.util.ItemStackUtils;
@@ -34,13 +33,12 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.items.ItemStackHandler;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class BackpackBaseMenu extends AbstractBackpackMenu {
     public List<UpgradeLockableSlotItemHandler> upgradeSlot = new ArrayList<>();
+    public Map<Optional<UpgradeBase<?>>, List<Integer>> mappedSlots = new HashMap<>();
     public int unmodifiableSlotCount = 0;
     public int TOOL_START, TOOL_END;
     public int UPGRADE_START, UPGRADE_END;
@@ -86,6 +84,17 @@ public class BackpackBaseMenu extends AbstractBackpackMenu {
         this.addUpgradeSlots(wrapper);
     }
 
+    //Rebuild whole menu - used when resizing the window
+    public void rebuildSlots() {
+        this.extendedScreenOffset = 0;
+
+        this.lastSlots.clear();
+        this.slots.clear();
+        this.remoteSlots.clear();
+
+        addSlots();
+    }
+
     //Update storage, player, upgrade slots
     //Add slots that can be modified - slots from upgrades
     public void addModifiableSlots() {
@@ -106,8 +115,8 @@ public class BackpackBaseMenu extends AbstractBackpackMenu {
         this.addUpgradeSlots(wrapper);
     }
 
-    //Reset Modifiable slots - remove slots if upgrades removed
-    public void updateModifiableSlots() {
+    //Rebuild Modifiable slots - remove slots if upgrades removed
+    public void rebuildModifiableSlots() {
         this.extendedScreenOffset = 0;
 
         if(this.lastSlots.size() > this.unmodifiableSlotCount) {
@@ -121,6 +130,18 @@ public class BackpackBaseMenu extends AbstractBackpackMenu {
         }
 
         this.addModifiableSlots();
+
+        //Update result slot on client
+        this.wrapper.getUpgradeManager().getUpgrade(CraftingUpgrade.class).ifPresent(craftingUpgrade -> canCraft(inventory.player.level(), inventory.player));
+    }
+
+    //Update slot positions without rebuilding slots (used when opening/closing upgrade tab)
+    public void updateModifiableSlotsPosition(int slot) {
+        //Update Upgrade Slots
+        this.updateBackpackUpgradeSlots();
+
+        //Slots from Upgrades
+        this.updateUpgradeSlotsPosition(slot);
 
         //Update result slot on client
         this.wrapper.getUpgradeManager().getUpgrade(CraftingUpgrade.class).ifPresent(craftingUpgrade -> canCraft(inventory.player.level(), inventory.player));
@@ -172,22 +193,6 @@ public class BackpackBaseMenu extends AbstractBackpackMenu {
         }
     }
 
-    public void updateSlots() {
-        this.extendedScreenOffset = 0;
-
-        this.lastSlots.clear();
-        this.slots.clear();
-        this.remoteSlots.clear();
-
-        addSlots();
-    }
-
-    public void addUpgradeListeners() {
-        for(Optional<? extends IUpgrade> upgrade : wrapper.getUpgradeManager().mappedUpgrades.values()) {
-            upgrade.ifPresent(iUpgrade -> iUpgrade.initializeContainers(this, this.wrapper));
-        }
-    }
-
     public void updateBackpackUpgradeSlots() {
         AtomicInteger nextSlot = new AtomicInteger();
         boolean tabOpened = false;
@@ -229,6 +234,40 @@ public class BackpackBaseMenu extends AbstractBackpackMenu {
 
             upgradeSlot.setLocked(upgradeSlot.getItem().getItem() instanceof UpgradeItem);
         });
+    }
+
+    public void updateUpgradeSlotsPosition(int changedSlot) {
+        for(var entry : wrapper.getUpgradeManager().mappedUpgrades.entrySet()) {
+            entry.getValue().ifPresent(upgradeLoaded -> {
+                int x = upgradeSlot.get(wrapper.getUpgradeManager().mappedUpgrades.inverse().get(entry.getValue())).x - 4;
+                int y = upgradeSlot.get(wrapper.getUpgradeManager().mappedUpgrades.inverse().get(entry.getValue())).y - 4;
+                var pos = upgradeLoaded.getUpgradeSlotsPosition(x, y);
+                List<Integer> indexes = this.mappedSlots.get(entry.getValue());
+                for(int i = 0; i < indexes.size(); i++) {
+                    this.slots.get(indexes.get(i)).x = pos.get(i).getFirst();
+                    this.slots.get(indexes.get(i)).y = upgradeLoaded.isTabOpened() ? pos.get(i).getSecond() : this.slots.get(indexes.get(i)).y - 3000;
+                }
+
+                //Update result slot on client
+                if(upgradeLoaded instanceof CraftingUpgrade) {
+                    this.broadcastChanges();
+                }
+            });
+        }
+    }
+
+    @Override
+    protected Slot addSlot(Slot slot) {
+        if(slot instanceof UpgradeLockableSlotItemHandler upgradeSlotItemHandler) {
+            this.upgradeSlot.add(upgradeSlotItemHandler);
+        }
+        return super.addSlot(slot);
+    }
+
+    public void addBackpackToolSlots(BackpackWrapper wrapper) {
+        for(int i = 0; i < wrapper.getTools().getSlots(); i++) {
+            this.addSlot(new ToolSlotItemHandler(wrapper, i, -14, 18 + (i * 18)));
+        }
     }
 
     public void addBackpackUpgradeSlots(BackpackWrapper wrapper) {
@@ -275,20 +314,6 @@ public class BackpackBaseMenu extends AbstractBackpackMenu {
         }
     }
 
-    @Override
-    protected Slot addSlot(Slot slot) {
-        if(slot instanceof UpgradeLockableSlotItemHandler upgradeSlotItemHandler) {
-            this.upgradeSlot.add(upgradeSlotItemHandler);
-        }
-        return super.addSlot(slot);
-    }
-
-    public void addBackpackToolSlots(BackpackWrapper wrapper) {
-        for(int i = 0; i < wrapper.getTools().getSlots(); i++) {
-            this.addSlot(new ToolSlotItemHandler(wrapper, i, -14, 18 + (i * 18)));
-        }
-    }
-
     public void addPlayerInventoryAndHotbar(Inventory inventory, int currentItemIndex) {
         int modifiedOffset = this.extendedScreenOffset;
         if(wrapper.isExtended()) {
@@ -306,17 +331,27 @@ public class BackpackBaseMenu extends AbstractBackpackMenu {
         }
     }
 
+    public void addUpgradeListeners() {
+        for(Optional<? extends IUpgrade> upgrade : wrapper.getUpgradeManager().mappedUpgrades.values()) {
+            upgrade.ifPresent(iUpgrade -> iUpgrade.initializeContainers(this, this.wrapper));
+        }
+    }
+
     public void addUpgradeSlots(BackpackWrapper wrapper) {
         for(Optional<UpgradeBase<?>> upgrade : wrapper.getUpgradeManager().mappedUpgrades.values()) {
             upgrade.ifPresent(upgradeLoaded -> {
                 int x = upgradeSlot.get(wrapper.getUpgradeManager().mappedUpgrades.inverse().get(upgrade)).x - 4;
                 int y = upgradeSlot.get(wrapper.getUpgradeManager().mappedUpgrades.inverse().get(upgrade)).y - 4;
-                if(upgradeLoaded.isTabOpened()) {
-                    for(var slot : upgradeLoaded.getUpgradeSlots(this, wrapper, x, y)) {
-                        this.addSlot(slot);
+                List<? extends Slot> slots = upgradeLoaded.getUpgradeSlots(this, wrapper, x, y);
+                List<Integer> indexes = new ArrayList<>();
+                for(var slot : slots) {
+                    if(!upgradeLoaded.isTabOpened()) {
+                        slot.y -= 2000; //Move out of the sight
                     }
+                    indexes.add(this.slots.size());
+                    this.addSlot(slot);
                 }
-
+                this.mappedSlots.put(upgrade, indexes);
                 //Update result slot on client
                 if(upgradeLoaded instanceof CraftingUpgrade) {
                     this.broadcastChanges();
@@ -327,12 +362,6 @@ public class BackpackBaseMenu extends AbstractBackpackMenu {
 
     @Override
     protected void doClick(int pSlotId, int pButton, ClickType pClickType, Player pPlayer) {
-        //Trash slot logic
-        if(pSlotId >= 0 && pSlotId < this.slots.size() && this.slots.get(pSlotId) instanceof TrashSlot trashSlot) {
-            if(!getCarried().isEmpty() && trashSlot.hasItem() && pClickType == ClickType.PICKUP) {
-                trashSlot.set(ItemStack.EMPTY.copy());
-            }
-        }
         if(pSlotId >= 0 && pSlotId < this.slots.size() && this.slots.get(pSlotId) instanceof FilterSlotItemHandler filterSlot) {
             if(getCarried().isEmpty() && pClickType == ClickType.PICKUP && pButton == 0) { //Remove item from filter slot
                 super.doClick(pSlotId, pButton, pClickType, pPlayer);
@@ -643,7 +672,6 @@ public class BackpackBaseMenu extends AbstractBackpackMenu {
     public void removed(Player player) {
         this.wrapper.getUpgradeManager().getUpgrade(CraftingUpgrade.class).ifPresent(craftingUpgrade -> this.checkHandlerAndPlaySound(craftingUpgrade.crafting, player, craftingUpgrade.crafting.getSlots()));
         this.wrapper.getUpgradeManager().getUpgrade(TanksUpgrade.class).ifPresent(tanksUpgrade -> this.clearSlotsAndPlaySound(inventory.player, tanksUpgrade.getFluidSlotsHandler(), 4));
-        this.wrapper.getUpgradeManager().getUpgrade(VoidUpgrade.class).ifPresent(this::voidTrashSlot);
         shiftTools(this.wrapper.getTools());
         super.removed(player);
     }
@@ -712,10 +740,6 @@ public class BackpackBaseMenu extends AbstractBackpackMenu {
                 }
             }
         }
-    }
-
-    public void voidTrashSlot(VoidUpgrade upgrade) {
-        upgrade.voidTrashSlotStack();
     }
 
     //Remove forbidden items from handler, if saving enabled

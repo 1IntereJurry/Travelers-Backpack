@@ -99,9 +99,9 @@ public class BackpackWrapper {
         if(!isSizeInitialized(stack)) {
             initializeSize(stack);
         }
-        int storageSlots = NbtHelper.get(stack, ModDataHelper.STORAGE_SLOTS);
-        int upgradeSlots = NbtHelper.get(stack, ModDataHelper.UPGRADE_SLOTS);
-        int toolSlots = NbtHelper.get(stack, ModDataHelper.TOOL_SLOTS);
+        int storageSlots = NbtHelper.getOrDefault(stack, ModDataHelper.STORAGE_SLOTS, Tiers.LEATHER.getStorageSlots());
+        int upgradeSlots = NbtHelper.getOrDefault(stack, ModDataHelper.UPGRADE_SLOTS, Tiers.LEATHER.getUpgradeSlots());
+        int toolSlots = NbtHelper.getOrDefault(stack, ModDataHelper.TOOL_SLOTS, Tiers.LEATHER.getToolSlots());
 
         this.screenID = screenID;
         this.level = level;
@@ -690,9 +690,20 @@ public class BackpackWrapper {
         requestScreenUpdate();
     }
 
+    public void requestMenuAndScreenUpdate(int slot) {
+        requestMenuUpdate(slot);
+        requestScreenUpdate();
+    }
+
     public void requestMenuUpdate() {
         if(!getPlayersUsing().isEmpty()) {
-            getPlayersUsing().stream().filter(player -> player.containerMenu instanceof BackpackBaseMenu).forEach(player -> ((BackpackBaseMenu)player.containerMenu).updateModifiableSlots());
+            getPlayersUsing().stream().filter(player -> player.containerMenu instanceof BackpackBaseMenu).forEach(player -> ((BackpackBaseMenu)player.containerMenu).rebuildModifiableSlots());
+        }
+    }
+
+    public void requestMenuUpdate(int slot) {
+        if(!getPlayersUsing().isEmpty()) {
+            getPlayersUsing().stream().filter(player -> player.containerMenu instanceof BackpackBaseMenu).forEach(player -> ((BackpackBaseMenu)player.containerMenu).updateModifiableSlotsPosition(slot));
         }
     }
 
